@@ -10,12 +10,15 @@ import { createSupabaseClient } from "./client";
 
 const supabase = createSupabaseClient();
 
+// Product columns plus the joined category (via products.category_id)
+const PRODUCT_SELECT = "*, category:categories(id, title)";
+
 export const supabaseService = {
   async getCategories(): Promise<ICategory[]> {
     const { data, error } = await supabase
       .from("categories")
       .select("*")
-      .order("id");
+      .order("created_at");
 
     if (error) {
       throw new Error(error.message);
@@ -39,7 +42,7 @@ export const supabaseService = {
   },
 
   async updateCategory(
-    categoryId: number,
+    categoryId: string,
     updatedCategory: CategoryUpdate,
   ): Promise<ICategory> {
     const { data, error } = await supabase
@@ -56,7 +59,18 @@ export const supabaseService = {
     return data;
   },
 
-  async deleteCategory(categoryId: number): Promise<void> {
+  // Products are kept: they're detached (category_id = null) before the delete.
+  // The FK should also be ON DELETE SET NULL so the database enforces this.
+  async deleteCategory(categoryId: string): Promise<void> {
+    const { error: detachError } = await supabase
+      .from("products")
+      .update({ category_id: null })
+      .eq("category_id", categoryId);
+
+    if (detachError) {
+      throw new Error(detachError.message);
+    }
+
     const { error } = await supabase
       .from("categories")
       .delete()
@@ -70,8 +84,8 @@ export const supabaseService = {
   async getProducts(): Promise<IProduct[]> {
     const { data, error } = await supabase
       .from("products")
-      .select("*")
-      .order("id");
+      .select(PRODUCT_SELECT)
+      .order("created_at");
 
     if (error) {
       throw new Error(error.message);
@@ -80,10 +94,10 @@ export const supabaseService = {
     return data;
   },
 
-  async getProduct(productId: number): Promise<IProduct> {
+  async getProduct(productId: string): Promise<IProduct> {
     const { data, error } = await supabase
       .from("products")
-      .select("*")
+      .select(PRODUCT_SELECT)
       .eq("id", productId)
       .single();
 
@@ -98,7 +112,7 @@ export const supabaseService = {
     const { data, error } = await supabase
       .from("products")
       .insert(product)
-      .select()
+      .select(PRODUCT_SELECT)
       .single();
 
     if (error) {
@@ -109,14 +123,14 @@ export const supabaseService = {
   },
 
   async updateProduct(
-    productId: number,
+    productId: string,
     updatedProduct: ProductUpdate,
   ): Promise<IProduct> {
     const { data, error } = await supabase
       .from("products")
       .update(updatedProduct)
       .eq("id", productId)
-      .select()
+      .select(PRODUCT_SELECT)
       .single();
 
     if (error) {
@@ -126,7 +140,7 @@ export const supabaseService = {
     return data;
   },
 
-  async deleteProduct(productId: number): Promise<void> {
+  async deleteProduct(productId: string): Promise<void> {
     const { error } = await supabase
       .from("products")
       .delete()

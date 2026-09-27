@@ -2,20 +2,18 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import {
-  ratingFromPurchases,
-  useCatalog,
-} from "../../../state context/catalog-context";
+import RowMenu from "@/components/row-menu";
+import { useCatalog } from "../../../state context/catalog-context";
 
 export default function ProductsPage() {
-  const { products, categories } = useCatalog();
+  const { products, categories, deleteProduct } = useCatalog();
   console.log(products, categories);
-  
-  const [categoryFilter, setCategoryFilter] = useState("All categories");
-  const filteredProducts =
-    categoryFilter === "All categories"
-      ? products
-      : products.filter((product) => product.category === categoryFilter);
+
+  // "" = all categories, otherwise a category id
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const filteredProducts = categoryFilter
+    ? products.filter((product) => product.category_id === categoryFilter)
+    : products;
   return (
     <section className="page-section">
       <div className="page-heading">
@@ -35,9 +33,11 @@ export default function ProductsPage() {
             value={categoryFilter}
             onChange={(event) => setCategoryFilter(event.target.value)}
           >
-            <option>All categories</option>
+            <option value="">All categories</option>
             {categories.map((category) => (
-              <option key={category.id}>{category.title}</option>
+              <option key={category.id} value={category.id}>
+                {category.title}
+              </option>
             ))}
           </select>
         </label>
@@ -50,7 +50,6 @@ export default function ProductsPage() {
               <th>Product</th>
               <th>Category</th>
               <th>Price</th>
-              <th>Rating</th>
               <th>Status</th>
               <th />
             </tr>
@@ -59,19 +58,12 @@ export default function ProductsPage() {
             {filteredProducts.map((product) => (
               <tr key={product.id}>
                 <td>
-                  <div className={`product-thumb thumb-${product.image}`}>
-                    {product.image.startsWith("http") ? (
+                  <div className="product-thumb">
+                    {product.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
                       <img src={product.image} alt="" />
                     ) : (
-                    <span>
-                      {product.image === "mat"
-                        ? "〰"
-                        : product.image === "tee"
-                          ? "＋"
-                          : product.image === "smoothie"
-                            ? "◉"
-                            : "✦"}
-                    </span>
+                      <span>✦</span>
                     )}
                   </div>
                   <div className="product-name">
@@ -80,21 +72,15 @@ export default function ProductsPage() {
                   </div>
                 </td>
                 <td>
-                  <span className="category-pill">{product.category}</span>
+                  <span className="category-pill">
+                    {product.category?.title ?? "Uncategorized"}
+                  </span>
                 </td>
                 <td>
                   <strong>${product.price.toFixed(2)}</strong>
-                  {product.oldPrice && (
-                    <del>${product.oldPrice.toFixed(2)}</del>
+                  {product.old_price != null && (
+                    <del>${product.old_price.toFixed(2)}</del>
                   )}
-                </td>
-                <td>
-                  <span className="rating">
-                    ★ {ratingFromPurchases(product.purchases).toFixed(1)}
-                  </span>
-                  <small className="rating-note">
-                    {product.purchases} purchases
-                  </small>
                 </td>
                 <td>
                   <span className="status">
@@ -102,12 +88,12 @@ export default function ProductsPage() {
                   </span>
                 </td>
                 <td>
-                  <button
-                    className="row-menu"
-                    aria-label={`Actions for ${product.title}`}
-                  >
-                    ···
-                  </button>
+                  <RowMenu
+                    label={product.title}
+                    editHref={`/products/${product.id}/edit`}
+                    deleteMessage={`Delete "${product.title}"? This can't be undone.`}
+                    onDelete={() => deleteProduct(product.id)}
+                  />
                 </td>
               </tr>
             ))}

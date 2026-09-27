@@ -1,15 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useState } from "react";
+import { createSupabaseClient } from "@/lib/supabase/client";
 import { useCatalog } from "../state context/catalog-context";
 
 export default function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { products } = useCatalog();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const logOut = async () => {
+    setProfileMenuOpen(false);
+    await createSupabaseClient().auth.signOut();
+    router.replace("/login");
+    router.refresh();
+  };
   const links = [
     { label: "Dashboard", href: "/dashboard", icon: "⌂" },
     { label: "Products", href: "/products", icon: "▦" },
@@ -58,9 +66,9 @@ export default function AdminShell({ children }: { children: ReactNode }) {
             </button>
             {profileMenuOpen && (
               <div className="profile-menu">
-                <Link href="/login" onClick={() => setProfileMenuOpen(false)}>
+                <button type="button" onClick={logOut}>
                   Log out
-                </Link>
+                </button>
               </div>
             )}
           </div>

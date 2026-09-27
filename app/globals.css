@@ -432,6 +432,61 @@ td:first-child {
   color: #a7afaa;
   letter-spacing: 2px;
   font-size: 14px;
+  padding: 4px 6px;
+  border-radius: 20px;
+  cursor: pointer;
+}
+.row-menu:hover,
+.row-menu[aria-expanded="true"] {
+  background: #e1ebe0;
+  color: var(--green);
+}
+.row-menu-wrap {
+  position: relative;
+  display: inline-block;
+}
+/* Opens to the left and upward so .table-card's overflow: hidden never clips it */
+.row-menu-list {
+  position: absolute;
+  z-index: 10;
+  right: calc(100% + 4px);
+  bottom: 0;
+  min-width: 120px;
+  padding: 6px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px #29453420;
+  text-align: left;
+}
+.row-menu-list a,
+.row-menu-list button {
+  display: block;
+  width: 100%;
+  padding: 9px 11px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.row-menu-list a:hover {
+  background: #f1f5f0;
+}
+.row-menu-list .danger {
+  color: var(--error);
+}
+.row-menu-list .danger:hover {
+  background: #fff0f0;
+}
+.row-menu-list button:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 .narrow-section {
   max-width: 850px;
@@ -631,7 +686,7 @@ td:first-child {
   font-size: 10px;
   color: #8e9992;
 }
-.category-card .row-menu {
+.category-card .row-menu-wrap {
   grid-column: 3;
   grid-row: 1;
 }
@@ -741,4 +796,43 @@ td:first-child {
   .form-actions button {
     width: 100%;
   }
+}
+.login-back a {
+  color: var(--green);
+  font-weight: 700;
+}
+p.login-back {
+  color: var(--muted);
+}
+.form-message {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.form-error {
+  color: var(--error);
+  background: #fff0f0;
+}
+.form-success {
+  color: #3d7a2b;
+  background: #eef6ea;
+}
+.profile-menu button {
+  display: block;
+  width: 100%;
+  padding: 9px 11px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--error);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+.profile-menu button:hover {
+  background: #fff0f0;
 }

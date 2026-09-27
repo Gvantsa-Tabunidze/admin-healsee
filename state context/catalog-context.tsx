@@ -25,20 +25,20 @@ type CatalogContextValue = {
   loading: boolean;
   error: string | null;
   getProducts: () => Promise<IProduct[]>;
-  getSingleProduct: (productId: number) => Promise<IProduct>;
+  getSingleProduct: (productId: string) => Promise<IProduct>;
   addProduct: (product: NewProduct) => Promise<IProduct>;
   updateProduct: (
-    productId: number,
+    productId: string,
     updatedProduct: ProductUpdate,
   ) => Promise<IProduct>;
-  deleteProduct: (productId: number) => Promise<void>;
+  deleteProduct: (productId: string) => Promise<void>;
   getCategories: () => Promise<ICategory[]>;
   addCategory: (category: NewCategory) => Promise<ICategory>;
   updateCategory: (
-    categoryId: number,
+    categoryId: string,
     updatedCategory: CategoryUpdate,
   ) => Promise<ICategory>;
-  deleteCategory: (categoryId: number) => Promise<void>;
+  deleteCategory: (categoryId: string) => Promise<void>;
 };
 const CatalogContext = createContext<CatalogContextValue | null>(null);
 
@@ -56,7 +56,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const getSingleProduct = useCallback(
-    (productId: number) => supabaseService.getProduct(productId),
+    (productId: string) => supabaseService.getProduct(productId),
     [],
   );
 
@@ -67,7 +67,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateProduct = useCallback(
-    async (productId: number, updatedProduct: ProductUpdate) => {
+    async (productId: string, updatedProduct: ProductUpdate) => {
       const updated = await supabaseService.updateProduct(
         productId,
         updatedProduct,
@@ -80,7 +80,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const deleteProduct = useCallback(async (productId: number) => {
+  const deleteProduct = useCallback(async (productId: string) => {
     await supabaseService.deleteProduct(productId);
     setProducts((prev) => prev.filter((product) => product.id !== productId));
   }, []);
@@ -99,7 +99,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateCategory = useCallback(
-    async (categoryId: number, updatedCategory: CategoryUpdate) => {
+    async (categoryId: string, updatedCategory: CategoryUpdate) => {
       const updated = await supabaseService.updateCategory(
         categoryId,
         updatedCategory,
@@ -109,15 +109,31 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
           category.id === categoryId ? updated : category,
         ),
       );
+      // Keep the joined category title on products in sync after a rename
+      setProducts((prev) =>
+        prev.map((product) =>
+          product.category_id === categoryId
+            ? { ...product, category: { id: updated.id, title: updated.title } }
+            : product,
+        ),
+      );
       return updated;
     },
     [],
   );
 
-  const deleteCategory = useCallback(async (categoryId: number) => {
+  const deleteCategory = useCallback(async (categoryId: string) => {
     await supabaseService.deleteCategory(categoryId);
     setCategories((prev) =>
       prev.filter((category) => category.id !== categoryId),
+    );
+    // Mirror the database: products stay, but lose their category
+    setProducts((prev) =>
+      prev.map((product) =>
+        product.category_id === categoryId
+          ? { ...product, category_id: null, category: null }
+          : product,
+      ),
     );
   }, []);
 
@@ -184,7 +200,4 @@ export function useCatalog() {
   if (!context)
     throw new Error("useCatalog must be used inside CatalogProvider");
   return context;
-}
-export function ratingFromPurchases(purchases: number) {
-  return Math.min(5, 3.6 + purchases / 100);
 }
